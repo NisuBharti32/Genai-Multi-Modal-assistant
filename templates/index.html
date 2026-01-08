@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenAI Multi-Modal Assistant</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>🤖 GenAI Multi-Modal Assistant</h2>
+
+<!-- ================= TEXT INPUT ================= -->
+<form method="POST" action="/ask" class="card">
+
+    <label for="text-input">Ask your question</label>
+
+    <textarea
+        id="text-input"
+        name="text"
+        placeholder="Type or speak in any language..."
+        title="Type your question"
+        rows="4"
+        required></textarea>
+
+    <button type="submit">Ask AI</button>
+</form>
+
+<!-- ================= VOICE INPUT ================= -->
+<div class="card center">
+    <button id="voice-btn" type="button" title="Speak using microphone">
+        🎤 Speak
+    </button>
+</div>
+
+<!-- ================= IMAGE INPUT ================= -->
+<form method="POST" action="/image" enctype="multipart/form-data" class="card">
+
+    <label for="image-upload">Upload an image</label>
+
+    <input
+        type="file"
+        id="image-upload"
+        name="image"
+        accept="image/*"
+        title="Upload image"
+        required>
+
+    <button type="submit">Upload Image</button>
+</form>
+
+<!-- ================= SPEAKER CONTROLS ================= -->
+<div class="card center">
+    <h3>🔊 Speaker Controls</h3>
+
+    <div class="btn-group">
+        <button id="speaker-toggle">🔈 Speaker ON</button>
+        <button id="stop-speech">⏹ Stop</button>
+        <button id="replay-speech">🔁 Replay</button>
+    </div>
+</div>
+
+<!-- ================= RESPONSE ================= -->
+{% if reply %}
+<div class="response card">
+    <h3>AI Response</h3>
+    <p id="ai-text">{{ reply|safe }}</p>
+
+    {% if emotion %}
+    <p class="emotion">Detected emotion: <b>{{ emotion }}</b></p>
+    {% endif %}
+</div>
+{% endif %}
+
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+/* -------- VOICE INPUT -------- */
+document.getElementById("voice-btn").onclick = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return alert("Please use Chrome browser");
+
+    const recog = new SR();
+    recog.lang = "en-IN"; // auto Hindi / Hinglish detect
+    recog.start();
+
+    recog.onresult = e => {
+        const text = e.results[0][0].transcript;
+        window.location.href = `/voice?text=${encodeURIComponent(text)}`;
+    };
+};
+
+/* -------- SPEAKER -------- */
+let speakerOn = true;
+let lastText = "";
+
+function speak(text) {
+    if (!speakerOn || !speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(u);
+}
+
+window.onload = () => {
+    const el = document.getElementById("ai-text");
+    if (el) {
+        lastText = el.innerText;
+        speak(lastText);
+    }
+};
+
+document.getElementById("speaker-toggle").onclick = () => {
+    speakerOn = !speakerOn;
+    if (!speakerOn) speechSynthesis.cancel();
+};
+
+document.getElementById("stop-speech").onclick = () =>
+    speechSynthesis.cancel();
+
+document.getElementById("replay-speech").onclick = () =>
+    speak(lastText);
+</script>
+
+</body>
+</html>
+
