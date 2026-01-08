@@ -7,23 +7,27 @@ interaction experience.
 
 The project focuses on combining Natural Language Processing, speech processing, and emotion-aware response generation into a single, unified system.
 
-## Key Features
- -Text-Based Interaction:Users can ask questions using a text input interface.
- -Voice Interaction (Speech-to-Text & Text-to-Speech): Users can speak directly to the assistant using a browser microphone, and AI responses are spoken aloud.
- -Speaker Control Panel: Includes speaker ON/OFF toggle, stop speaking mid-response, and replay last AI response.
- -Image Upload & Explanation:Users can upload an image and receive an AI-generated explanation of its content.
- -Emotion Detection:The system detects emotions such as angry, confused, happy, or neutral from user input and adjusts the response tone accordingly.
- -Emotion-Aware AI Responses: The AI maintains correct answers while modifying tone based on detected emotion (calm, explanatory, friendly, etc.).
+ 
+ 
 
-## Technologies Used
+ ## **Key Features**
+  * Text-Based Interaction: Users can ask questions using a text input interface.
+  * Voice Interaction (Speech-to-Text & Text-to-Speech): Users can speak directly to the assistant using a browser microphone, and AI responses are spoken aloud.
+  * Speaker Control Panel: Includes speaker ON/OFF toggle, stop speaking mid-response, and replay last AI response.
+  * Image Upload & Explanation: Users can upload an image and receive an AI-generated explanation of its content.
+  * Emotion Detection: The system detects emotions such as angry, confused, happy, or neutral from user input and adjusts the response tone accordingly.
+  * Emotion-Aware AI Responses: The AI maintains correct answers while modifying tone based on detected emotion (calm, explanatory, friendly, etc.).
 
- Python – Core backend logic
- Flask – Web framework
- Groq LLM API – Large Language Model integration
- HTML, CSS, JavaScript – Frontend interface
- SpeechRecognition API (Browser) – Voice input
- Web Speech API – Text-to-speech output
-dotenv – Environment variable management
+
+## **Technologies Used**
+
+* Python – Core backend logic
+* Flask – Web framework
+* Groq LLM API – Large Language Model integration
+* HTML, CSS, JavaScript – Frontend interface
+* SpeechRecognition API (Browser) – Voice input
+* Web Speech API – Text-to-speech output
+* dotenv – Environment variable management
 
 ## Project Structure
 ```
