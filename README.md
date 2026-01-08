@@ -1,5 +1,5 @@
-# GenAI Multi-Modal Assistant
-Welcome to the GenAI Multi-Modal Assistant project.
+# GenAI Multi-Model Assistant
+Welcome to the GenAI Multi-Model Assistant project.
 This is a Python-based web application built using Flask that enables users to interact with an AI system 
 through multiple input modes such as text, voice, and images. The assistant is designed to provide intelligent
 responses while adapting its tone based on the user’s emotional state, creating a more human-like 
