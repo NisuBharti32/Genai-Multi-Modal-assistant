@@ -3,5 +3,5 @@ python-dotenv
 openai
 groq
 SpeechRecognition
-pyaudio
+##pyaudio
 werkzeug
