@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from utils.speech_to_text import voice_to_text
 
-# ---------- INIT ----------
+# ------------------ INIT ------------------
 load_dotenv()
 
 app = Flask(__name__)
@@ -18,8 +18,11 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-# ---------- STRONG EMOTION DETECTOR ----------
+# ------------------ STRONG EMOTION DETECTOR ------------------
 def detect_emotion(text):
+    if not text:
+        return "neutral"
+
     text = text.lower()
 
     angry_words = [
@@ -30,12 +33,12 @@ def detect_emotion(text):
 
     confused_words = [
         "confused", "not clear", "don't understand",
-        "what is this", "how", "why"
+        "what is this", "how", "why", "explain"
     ]
 
     happy_words = [
         "happy", "excited", "great", "awesome",
-        "love", "amazing"
+        "love", "amazing", "nice"
     ]
 
     for w in angry_words:
@@ -52,15 +55,15 @@ def detect_emotion(text):
 
     return "neutral"
 
-# ---------- HOME ----------
+# ------------------ HOME ------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ---------- TEXT INPUT ----------
+# ------------------ TEXT INPUT ------------------
 @app.route("/ask", methods=["POST"])
 def ask_ai():
-    text = request.form.get("text", "")
+    text = request.form.get("text", "").strip()
 
     emotion = detect_emotion(text)
     reply = get_ai_response(text, emotion)
@@ -71,7 +74,7 @@ def ask_ai():
         emotion=emotion
     )
 
-# ---------- VOICE INPUT ----------
+# ------------------ VOICE INPUT ------------------
 @app.route("/voice")
 def voice():
     audio = request.args.get("text", "")
@@ -86,7 +89,7 @@ def voice():
         emotion=emotion
     )
 
-# ---------- IMAGE INPUT ----------
+# ------------------ IMAGE INPUT ------------------
 @app.route("/image", methods=["POST"])
 def image():
     file = request.files.get("image")
@@ -100,7 +103,7 @@ def image():
     )
     file.save(path)
 
-    prompt = f"Explain what is happening in this image: {file.filename}"
+    prompt = f"Explain what is happening in this image in simple terms."
     emotion = "neutral"
 
     reply = get_ai_response(prompt, emotion)
@@ -111,38 +114,40 @@ def image():
         emotion=emotion
     )
 
-# ---------- AI RESPONSE ----------
+# ------------------ AI RESPONSE ------------------
 def get_ai_response(text, emotion):
     if not text:
         return "Please ask something."
 
-    # 🎯 Emotion only changes TONE
+    # 🎯 Emotion affects ONLY TONE
     if emotion == "angry":
-        tone = (
-            "User is frustrated. Respond calmly, politely, "
-            "reassure them and give a clear correct answer."
+        tone_instruction = (
+            "The user is frustrated. Respond calmly and politely. "
+            "Give a clear, direct and correct answer without lecturing."
         )
     elif emotion == "confused":
-        tone = (
-            "User is confused. Explain step by step in simple language "
-            "with a small example."
+        tone_instruction = (
+            "The user is confused. Explain step by step using simple language "
+            "and one short example."
         )
     elif emotion == "happy":
-        tone = (
-            "User is happy. Respond in a friendly and encouraging tone."
+        tone_instruction = (
+            "The user is positive. Respond in a friendly and encouraging tone."
         )
     else:
-        tone = "Respond in a clear and helpful tone."
+        tone_instruction = "Respond clearly and helpfully."
 
     final_prompt = f"""
-{tone}
+{tone_instruction}
+
+IMPORTANT RULES:
+- Focus only on answering the user's question.
+- Do NOT describe emotions.
+- Do NOT give motivational speeches.
+- Keep the answer relevant.
 
 User question:
 {text}
-
-IMPORTANT:
-- Focus on answering the question.
-- Do NOT explain the emotion.
 """
 
     try:
@@ -159,7 +164,13 @@ IMPORTANT:
     except Exception as e:
         return f"Error: {e}"
 
-# ---------- RUN ----------
+# ------------------ RUN ------------------
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
-    app.run(debug=True)
+
+    # ✅ Deployment-ready (Render / Cloud)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=True
+    )
