@@ -87,20 +87,20 @@ Open the browser and go to:
 
 ## Usage
 
-Type a question and click Ask AI
-Use the Speak button for voice input
-Upload an image to receive AI explanation
-Control AI voice using speaker controls
-Observe emotion-aware responses based on your input tone
+- Type a question and click Ask AI
+- Use the Speak button for voice input
+- Upload an image to receive AI explanation
+- Control AI voice using speaker controls
+- Observe emotion-aware responses based on your input tone
 
 
 ## Future Enhancements
 
-Chat history panel with session-based memory
-User authentication
-Emotion visualization dashboard
-AI response summarization
-Multi-language auto-detection
+- Chat history panel with session-based memory
+- User authentication
+- Emotion visualization dashboard
+- AI response summarization
+- Multi-language auto-detection
 
 ## License
 
