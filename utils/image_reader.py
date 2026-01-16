@@ -3,26 +3,35 @@ import os
 
 def generate_image_prompt(image_path: str) -> str:
     """
-    Generates an intelligent prompt for AI
-    to explain an uploaded image using reasoning.
+    Generates a structured and intelligent prompt for AI
+    to explain an uploaded image using contextual reasoning.
     """
 
     filename = os.path.basename(image_path)
 
     prompt = f"""
-You are a smart and helpful AI assistant.
+You are an intelligent, observant, and helpful AI assistant.
 
-A user has uploaded an image named "{filename}".
+A user has uploaded an image with the filename: "{filename}"
 
-Your task:
-1. Predict what the image most likely contains
-2. Describe visible objects, people, or environment
-3. Explain possible real-world context or use-case
-4. Use simple, clear, and user-friendly language
-5. If image details are unclear, make reasonable assumptions
+Your responsibilities:
+1. Carefully infer what the image most likely depicts
+2. Describe important visible elements such as:
+   - Objects
+   - People (if any)
+   - Environment or setting
+3. Explain the possible real-world context, purpose, or scenario
+4. Use simple, clear, and easy-to-understand language
+5. If some details are unclear, make reasonable and logical assumptions
 
-Do NOT say you cannot see the image.
-Act like an intelligent assistant explaining based on context.
+Guidelines:
+- Do NOT mention that you cannot see the image
+- Do NOT mention filenames in the final answer
+- Avoid technical jargon unless necessary
+- Be confident but realistic in explanations
+- Keep the response user-friendly and natural
+
+Start directly with the explanation.
 """
 
     return prompt

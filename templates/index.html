@@ -6,8 +6,8 @@
 <title>GenAI Multi-Modal Assistant</title>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
+
 <body>
 
 <div class="container">
@@ -23,7 +23,6 @@
         id="text-input"
         name="text"
         placeholder="Type or speak in any language..."
-        title="Type your question"
         rows="4"
         required></textarea>
 
@@ -32,7 +31,7 @@
 
 <!-- ================= VOICE INPUT ================= -->
 <div class="card center">
-    <button id="voice-btn" type="button" title="Speak using microphone">
+    <button id="voice-btn" type="button">
         🎤 Speak
     </button>
 </div>
@@ -47,7 +46,6 @@
         id="image-upload"
         name="image"
         accept="image/*"
-        title="Upload image"
         required>
 
     <button type="submit">Upload Image</button>
@@ -71,7 +69,9 @@
     <p id="ai-text">{{ reply|safe }}</p>
 
     {% if emotion %}
-    <p class="emotion">Detected emotion: <b>{{ emotion }}</b></p>
+    <p class="emotion">
+        Detected emotion: <b>{{ emotion }}</b>
+    </p>
     {% endif %}
 </div>
 {% endif %}
@@ -80,13 +80,13 @@
 
 <!-- ================= JS ================= -->
 <script>
-/* -------- VOICE INPUT -------- */
+/* -------- VOICE INPUT (MIC) -------- */
 document.getElementById("voice-btn").onclick = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return alert("Please use Chrome browser");
 
     const recog = new SR();
-    recog.lang = "en-IN"; // auto Hindi / Hinglish detect
+    recog.lang = "en-IN"; // Hinglish best support
     recog.start();
 
     recog.onresult = e => {
@@ -95,14 +95,49 @@ document.getElementById("voice-btn").onclick = () => {
     };
 };
 
-/* -------- SPEAKER -------- */
+/* -------- SPEAKER (CLEAR ENGLISH VOICE) -------- */
 let speakerOn = true;
 let lastText = "";
+let lastEmotion = "{{ emotion }}";
 
 function speak(text) {
     if (!speakerOn || !speechSynthesis) return;
+
     speechSynthesis.cancel();
+
     const u = new SpeechSynthesisUtterance(text);
+
+    /* ✅ FORCE ENGLISH VOICE (BEST FOR HINDI / HINGLISH) */
+    u.lang = "en-IN";
+
+    // 🎭 Emotion-based tuning (EXAGGERATED for clarity)
+    if (lastEmotion === "angry") {
+        u.rate = 0.7;   // very calm
+        u.pitch = 0.7;
+    }
+    else if (lastEmotion === "confused") {
+        u.rate = 0.85;  // teacher-like
+        u.pitch = 1.0;
+    }
+    else if (lastEmotion === "happy") {
+        u.rate = 1.15;  // energetic
+        u.pitch = 1.4;
+    }
+    else {
+        u.rate = 1.0;
+        u.pitch = 1.0;
+    }
+
+    // 🎙️ Prefer Google / Microsoft English voices
+    const voices = speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v =>
+        v.lang.includes("en") &&
+        (v.name.includes("Google") || v.name.includes("Microsoft"))
+    );
+    if (preferredVoice) {
+        u.voice = preferredVoice;
+    }
+
     speechSynthesis.speak(u);
 }
 
