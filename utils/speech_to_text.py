@@ -2,8 +2,8 @@
 
 def voice_to_text(text_from_browser=None):
     """
-    Browser se aaya hua speech-text return karega.
-    Agar empty hua to safe default dega.
+     Returns the speech text received from the browser.
+    If the input is empty, it returns a safe default value.
     """
     if text_from_browser and text_from_browser.strip():
         return text_from_browser.strip()
