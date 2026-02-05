@@ -1,6 +1,5 @@
 import os
 
-
 def generate_image_prompt(image_path: str) -> str:
     """
     Generates a structured and intelligent prompt for AI
@@ -33,5 +32,4 @@ Guidelines:
 
 Start directly with the explanation.
 """
-
     return prompt

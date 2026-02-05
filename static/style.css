@@ -1,74 +1,31 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    text-align: center;
-    padding: 40px;
-}
- hr {
-    display:none;
-    
-}
-button {
-    margin-bottom: 25px;
-}
-body {
-    background-color:#285351;
-    color:#12172b;
-    font-family: "Inter", sans-serif;
-    transition: all 0.3s ease;
-     
+/* ===== GLOBAL RESET ===== */
+* {
+    box-sizing: border-box;
 }
 
-
-textarea {
-    width: 60%;
-    height: 100px;
-    font-size: 20px;
-    color: black;
-}
-
-input[type="file"] {
-    font-size: 26px;
-    margin-left:30px;
-}
-
-button {
-    padding: 20px 30px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #1c66ac67;
-}
-
-.response {
-    margin-top: 20px;
-    background: hwb(0 100% 0% / 0.966);
-    padding: 15px;
-    border-radius: 8px;
-    width: 70%;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: left;
-}
+/* ===== BODY ===== */
 body {
     background: #0f172a;
     color: #e5e7eb;
-    font-family: Arial, sans-serif;
+    font-family: "Inter", Arial, sans-serif;
     margin: 0;
+    padding: 0;
 }
 
+/* ===== CONTAINER ===== */
 .container {
-    max-width: 800px;
+    max-width: 900px;
     margin: auto;
     padding: 30px;
 }
 
+/* ===== HEADINGS ===== */
 h2, h3 {
     text-align: center;
+    margin-bottom: 15px;
 }
 
+/* ===== CARD ===== */
 .card {
     background: #020617;
     padding: 20px;
@@ -76,45 +33,93 @@ h2, h3 {
     margin-top: 20px;
 }
 
+/* ===== CENTER HELPER ===== */
 .center {
     text-align: center;
 }
 
-textarea, input[type="file"] {
+/* ===== TEXTAREA ===== */
+textarea {
     width: 100%;
     margin-top: 8px;
-    padding: 10px;
+    padding: 12px;
     border-radius: 8px;
     border: none;
     background: #020617;
-    color: white;
+    color: #e5e7eb;
+    font-size: 16px;
 }
 
+textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* ===== FILE INPUT (CENTER FIX) ===== */
+input[type="file"] {
+    display: block;
+    margin: 12px auto;
+    color: #e5e7eb;
+}
+
+/* ===== BUTTONS (CENTER FIX) ===== */
 button {
-    margin-top: 12px;
-    padding: 10px 20px;
+    display: block;              /* 👈 important */
+    margin: 15px auto;           /* 👈 center horizontally */
+    padding: 10px 22px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     background: #6366f1;
     color: white;
+    font-size: 15px;
+    transition: background 0.2s ease;
 }
 
 button:hover {
     background: #4f46e5;
 }
 
-.btn-group button {
-    margin: 5px;
+/* ===== BUTTON GROUP (Speaker Controls) ===== */
+.btn-group {
+    display: flex;
+    justify-content: center;     /* 👈 center buttons */
+    flex-wrap: wrap;
 }
 
+.btn-group button {
+    margin: 6px;
+}
+
+/* ===== RESPONSE ===== */
 .response {
+    margin-top: 20px;
     line-height: 1.6;
 }
 
-.emotion {
-    opacity: 0.8;
-    font-size: 14px;
+/* ===== AI RESPONSE TEXT ===== */
+#ai-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    padding: 12px;
+    background: #020617;
+    border-radius: 8px;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
+/* ===== EMOTION TEXT ===== */
+.emotion {
+    margin-top: 8px;
+    opacity: 0.75;
+    font-size: 14px;
+    text-align: right;
+}
 
+/* ===== HIDE HR ===== */
+hr {
+    display: none;
+}

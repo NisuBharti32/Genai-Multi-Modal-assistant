@@ -22,18 +22,18 @@
     <textarea
         id="text-input"
         name="text"
-        placeholder="Type or speak in any language..."
+        placeholder="Type your question here..."
         rows="4"
         required></textarea>
 
-    <button type="submit">Ask AI</button>
+    <div class="center">
+        <button type="submit">Ask AI</button>
+    </div>
 </form>
 
-<!-- ================= VOICE INPUT ================= -->
+<!-- ================= VOICE INPUT (SPEAK FEATURE) ================= -->
 <div class="card center">
-    <button id="voice-btn" type="button">
-        🎤 Speak
-    </button>
+    <button id="voice-btn" type="button">🎤 Speak</button>
 </div>
 
 <!-- ================= IMAGE INPUT ================= -->
@@ -48,7 +48,9 @@
         accept="image/*"
         required>
 
-    <button type="submit">Upload Image</button>
+    <div class="center">
+        <button type="submit">Upload Image</button>
+    </div>
 </form>
 
 <!-- ================= SPEAKER CONTROLS ================= -->
@@ -56,9 +58,9 @@
     <h3>🔊 Speaker Controls</h3>
 
     <div class="btn-group">
-        <button id="speaker-toggle">🔈 Speaker ON</button>
+        <button id="play-speech">▶ Play</button>
         <button id="stop-speech">⏹ Stop</button>
-        <button id="replay-speech">🔁 Replay</button>
+        <button id="speaker-toggle">🔈 Speaker ON</button>
     </div>
 </div>
 
@@ -66,7 +68,8 @@
 {% if reply %}
 <div class="response card">
     <h3>AI Response</h3>
-    <p id="ai-text">{{ reply|safe }}</p>
+
+    <pre id="ai-text">{{ reply }}</pre>
 
     {% if emotion %}
     <p class="emotion">
@@ -80,87 +83,86 @@
 
 <!-- ================= JS ================= -->
 <script>
-/* -------- VOICE INPUT (MIC) -------- */
-document.getElementById("voice-btn").onclick = () => {
+/* ---------- READ URL PARAMS ---------- */
+const urlParams = new URLSearchParams(window.location.search);
+const autoSpeak = urlParams.get("speak") === "1";
+
+/* ---------- VOICE INPUT (MIC) ---------- */
+document.getElementById("voice-btn").addEventListener("click", () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return alert("Please use Chrome browser");
+    if (!SR) {
+        alert("Please use Google Chrome for voice input.");
+        return;
+    }
 
-    const recog = new SR();
-    recog.lang = "en-IN"; // Hinglish best support
-    recog.start();
+    const recognition = new SR();
+    recognition.lang = "en-IN";
+    recognition.start();
 
-    recog.onresult = e => {
-        const text = e.results[0][0].transcript;
-        window.location.href = `/voice?text=${encodeURIComponent(text)}`;
+    recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        window.location.href =
+            `/voice?text=${encodeURIComponent(spokenText)}&speak=1`;
     };
-};
+});
 
-/* -------- SPEAKER (CLEAR ENGLISH VOICE) -------- */
+/* ---------- SPEAKER (TEXT TO SPEECH) ---------- */
 let speakerOn = true;
 let lastText = "";
 let lastEmotion = "{{ emotion }}";
 
 function speak(text) {
-    if (!speakerOn || !speechSynthesis) return;
+    if (!speechSynthesis || !speakerOn || !text) return;
 
     speechSynthesis.cancel();
-
     const u = new SpeechSynthesisUtterance(text);
-
-    /* ✅ FORCE ENGLISH VOICE (BEST FOR HINDI / HINGLISH) */
     u.lang = "en-IN";
 
-    // 🎭 Emotion-based tuning (EXAGGERATED for clarity)
-    if (lastEmotion === "angry") {
-        u.rate = 0.7;   // very calm
-        u.pitch = 0.7;
-    }
-    else if (lastEmotion === "confused") {
-        u.rate = 0.85;  // teacher-like
+    if (lastEmotion === "confused") {
+        u.rate = 0.85;
         u.pitch = 1.0;
-    }
-    else if (lastEmotion === "happy") {
-        u.rate = 1.15;  // energetic
-        u.pitch = 1.4;
-    }
-    else {
+    } else {
         u.rate = 1.0;
         u.pitch = 1.0;
-    }
-
-    // 🎙️ Prefer Google / Microsoft English voices
-    const voices = speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v =>
-        v.lang.includes("en") &&
-        (v.name.includes("Google") || v.name.includes("Microsoft"))
-    );
-    if (preferredVoice) {
-        u.voice = preferredVoice;
     }
 
     speechSynthesis.speak(u);
 }
 
+/* ---------- AUTO SPEAK ON PAGE LOAD (ONLY FOR MIC) ---------- */
 window.onload = () => {
     const el = document.getElementById("ai-text");
-    if (el) {
-        lastText = el.innerText;
+    if (!el) return;
+
+    lastText = el.innerText.trim();
+
+    // 🔥 THIS WAS MISSING
+    if (autoSpeak) {
         speak(lastText);
     }
 };
 
-document.getElementById("speaker-toggle").onclick = () => {
-    speakerOn = !speakerOn;
-    if (!speakerOn) speechSynthesis.cancel();
-};
-
-document.getElementById("stop-speech").onclick = () =>
-    speechSynthesis.cancel();
-
-document.getElementById("replay-speech").onclick = () =>
+/* ---------- CONTROLS ---------- */
+document.getElementById("play-speech").addEventListener("click", () => {
     speak(lastText);
+});
+
+document.getElementById("stop-speech").addEventListener("click", () => {
+    speechSynthesis.cancel();
+});
+
+document.getElementById("speaker-toggle").addEventListener("click", () => {
+    speakerOn = !speakerOn;
+    const btn = document.getElementById("speaker-toggle");
+
+    if (!speakerOn) {
+        speechSynthesis.cancel();
+        btn.innerText = "🔇 Speaker OFF";
+    } else {
+        btn.innerText = "🔈 Speaker ON";
+    }
+});
 </script>
 
 </body>
 </html>
-
