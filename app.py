@@ -1,71 +1,118 @@
 from flask import Flask, render_template, request
 import os
 import re
+
 from dotenv import load_dotenv
 from groq import Groq
 
-# 🔹 OCR + CV imports
 import pytesseract
 from PIL import Image
 import cv2
+from werkzeug.utils import secure_filename
 
-# 🔹 Tesseract path (Windows fix)
+from utils.image_reader import analyze_image
+
+# Tesseract path
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-# ---------- INIT ----------
 load_dotenv()
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# ---------- GROQ CLIENT ----------
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "tiff"}
+
+# Current supported Groq text model for /ask and /voice only
+# (llama-3.1-8b-instant is now Enterprise-only and returns 404 on this tier)
+GROQ_MODEL = "openai/gpt-oss-120b"
+
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# ---------- EMOTION DETECTOR (FIXED) ----------
+#   EMOTION DETECTOR (rule-based, 5 categories)
 def detect_emotion(text):
     text = text.lower()
 
-    # 🔥 ONLY strong confusion signals
-    confused_words = [
-        "i am confused",
-        "samajh nahi",
-        "samajh nahi aa raha",
-        "mujhe samajh nahi",
-        "not clear",
-        "clear nahi",
-        "confusing"
+    angry_words = [
+        "angry", "frustrated", "frustrating", "annoyed", "annoying",
+        "irritated", "pissed", "hate this", "so bad", "worst",
+        "gussa", "bakwas", "galat", "chid"
     ]
 
+    confused_words = [
+        "confused", "confusing", "confuse",
+        "samajh nahi", "samajh nahi aa raha", "mujhe samajh nahi",
+        "not clear", "clear nahi",
+        "don't understand", "dont understand", "do not understand",
+        "no idea", "lost", "not getting", "not able to understand",
+        "what does this mean", "how does this work", "what are you saying"
+    ]
+
+    sad_words = [
+        "sad", "upset", "unhappy", "down", "depressed", "hopeless",
+        "udaas", "dukhi", "mann nahi", "not feeling good", "low today",
+        "feeling low"
+    ]
+
+    happy_words = [
+        "happy", "great", "awesome", "amazing", "excited", "love this",
+        "wonderful", "fantastic", "khush", "mast", "badhiya"
+    ]
+
+    # Order matters: check the more specific / less ambiguous sets first
+    for w in angry_words:
+        if w in text:
+            return "angry"
     for w in confused_words:
         if w in text:
             return "confused"
+    for w in sad_words:
+        if w in text:
+            return "sad"
+    for w in happy_words:
+        if w in text:
+            return "happy"
 
     return "neutral"
 
-# ---------- STEP FORMAT FIX ----------
+#   OCR TEXT
+def clean_extracted_text(text):
+    lines = text.split("\n")
+    filtered = []
+
+    for line in lines:
+        line = line.strip()
+
+        if len(line) < 3:
+            continue
+
+        # remove garbage like numbers only
+        if re.match(r'^[\d\.\-/() ]+$', line):
+            continue
+
+        filtered.append(line)
+
+    return "\n".join(filtered)
+
+
 def fix_numbered_lines(text):
     text = re.sub(r'\s*(\d+\.)', r'\n\1', text)
     return text.strip()
 
-# ---------- HOME ----------
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ---------- TEXT INPUT ----------
+# -TEXT INPUT
 @app.route("/ask", methods=["POST"])
 def ask_ai():
     user_text = request.form.get("text", "")
     emotion = detect_emotion(user_text)
-
-    if emotion == "confused":
-        reply = confused_response(user_text)
-    else:
-        reply = normal_response(user_text)
+    reply = generate_response(user_text, emotion)
 
     return render_template("index.html", reply=reply, emotion=emotion)
 
-# ---------- VOICE INPUT (MIC FIX) ----------
+#   VOICE INPUT
 @app.route("/voice", methods=["GET"])
 def voice():
     text = request.args.get("text", "")
@@ -78,11 +125,7 @@ def voice():
         )
 
     emotion = detect_emotion(text)
-
-    if emotion == "confused":
-        reply = confused_response(text)
-    else:
-        reply = normal_response(text)
+    reply = generate_response(text, emotion)
 
     return render_template(
         "index.html",
@@ -90,7 +133,7 @@ def voice():
         emotion=emotion
     )
 
-# ---------- IMAGE INPUT (UNCHANGED) ----------
+#  IMAGE INPUT
 @app.route("/image", methods=["POST"])
 def image():
     file = request.files.get("image")
@@ -102,44 +145,38 @@ def image():
             emotion="neutral"
         )
 
-    image_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+    filename = secure_filename(file.filename)
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return render_template(
+            "index.html",
+            reply="Unsupported file type. Please upload a PNG, JPG, JPEG, BMP, or TIFF image.",
+            emotion="neutral"
+        )
+
+    image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(image_path)
 
+    #  OCR (kept as supporting context for the vision model — no longer
+    #  the only thing sent to the LLM, and no longer a hard blocker if it fails)
+    extracted_text = ""
     img = cv2.imread(image_path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.threshold(
-        gray, 0, 255,
-        cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )[1]
+    if img is not None:
+        try:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            gray = cv2.threshold(
+                gray, 0, 255,
+                cv2.THRESH_BINARY + cv2.THRESH_OTSU
+            )[1]
+            custom_config = r'--oem 3 --psm 6'
+            raw_text = pytesseract.image_to_string(gray, config=custom_config).strip()
+            extracted_text = clean_extracted_text(raw_text)
+        except Exception:
+            extracted_text = ""
 
-    custom_config = r'--oem 3 --psm 6'
-    extracted_text = pytesseract.image_to_string(
-        gray,
-        config=custom_config
-    ).strip()
-
-    if not extracted_text:
-        extracted_text = "Some text is present, but handwriting is unclear."
-
-    prompt = f"""
-The following text was extracted from an uploaded image (such as a medical prescription):
-
-{extracted_text}
-
-Explain the content clearly in simple language.
-If medicines are mentioned, explain their usage in an easy way.
-"""
-
-    res = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[
-            {"role": "system", "content": "You explain extracted medical text clearly and responsibly."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
-
-    reply = res.choices[0].message.content.strip()
+    #  VISION MODEL — receives the actual image + OCR text as a hint
+    reply = analyze_image(image_path, ocr_text=extracted_text)
 
     return render_template(
         "index.html",
@@ -147,52 +184,82 @@ If medicines are mentioned, explain their usage in an easy way.
         emotion="neutral"
     )
 
-# ---------- NORMAL TEXT RESPONSE (PARAGRAPH) ----------
-def normal_response(text):
-    system_prompt = """
+# ---------- EMOTION-ADAPTIVE RESPONSE ----------
+EMOTION_SYSTEM_PROMPTS = {
+    "angry": """
+You are a calm, empathetic AI assistant.
+The user seems frustrated or angry.
+
+RULES:
+- Acknowledge their frustration briefly, without over-apologizing
+- Stay calm and reassuring
+- Get to a clear, useful answer quickly
+- Answer in ONE short paragraph, no numbered points
+""",
+    "confused": """
+You are a patient teacher.
+The user seems confused.
+
+STRICT RULES:
+- Answer step by step
+- Use numbered points (1, 2, 3...)
+- Each step = one clear, simple sentence
+- No paragraph
+""",
+    "sad": """
+You are a supportive, gentle AI assistant.
+The user seems a bit down or discouraged.
+
+RULES:
+- Keep the tone warm and encouraging, without being dismissive
+- Still give a clear, useful, correct answer
+- Answer in ONE short, kind paragraph, no numbered points
+""",
+    "happy": """
+You are a friendly, upbeat AI assistant.
+The user seems happy or excited.
+
+RULES:
+- Match their positive energy briefly
+- Keep the answer clear and useful
+- Answer in ONE short paragraph, no numbered points
+""",
+    "neutral": """
 You are a helpful AI assistant.
 
 RULES:
 - Answer in ONE short paragraph
 - Do NOT use numbered points
-- Do NOT explain step by step
-- Keep language simple and natural
-"""
+- Keep it simple and natural
+""",
+}
 
-    res = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text}
-        ],
-        temperature=0.6
-    )
-    return res.choices[0].message.content.strip()
 
-# ---------- CONFUSED TEXT RESPONSE (STEP-BY-STEP) ----------
-def confused_response(text):
-    system_prompt = """
-You are a patient teacher.
+def generate_response(text, emotion):
+    if not text:
+        return "Please ask something."
 
-STRICT RULES:
-- ALWAYS answer step by step
-- Use ONLY numbered points (1, 2, 3...)
-- Each point must be ONE complete sentence
-- NO paragraphs
-- NO extra text before or after steps
-"""
+    system_prompt = EMOTION_SYSTEM_PROMPTS.get(emotion, EMOTION_SYSTEM_PROMPTS["neutral"])
+    temperature = 0.2 if emotion == "confused" else 0.6
 
-    res = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text}
-        ],
-        temperature=0.2
-    )
+    try:
+        res = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text}
+            ],
+            temperature=temperature
+        )
+        reply = res.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error: {e}"
 
-    return fix_numbered_lines(res.choices[0].message.content.strip())
+    if emotion == "confused":
+        reply = fix_numbered_lines(reply)
 
-# ---------- RUN ----------
+    return reply
+
+#  RUN
 if __name__ == "__main__":
     app.run(debug=True)
