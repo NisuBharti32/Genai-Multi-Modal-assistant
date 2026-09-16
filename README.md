@@ -109,7 +109,7 @@ Open the browser and go to:
 - **AI Response Summarization:** Provide concise summaries of longer AI-generated responses.
 - **Multi-Language Support:** Add automatic language detection and multilingual interaction.
 
-  ```mermaid
+ ```mermaid
 flowchart TD
     User([User Input])
 
@@ -142,8 +142,6 @@ flowchart TD
     style GPT_V fill:#4A90D9,color:#fff
     style Qwen fill:#E27D60,color:#fff
 ```
-
-
 ## License
 
 This project is licensed under the MIT License.
