@@ -109,6 +109,41 @@ Open the browser and go to:
 - **AI Response Summarization:** Provide concise summaries of longer AI-generated responses.
 - **Multi-Language Support:** Add automatic language detection and multilingual interaction.
 
+  ```mermaid
+flowchart TD
+    User([User Input])
+
+    User --> Text[📝 Text Input]
+    User --> Voice[🎤 Voice Input]
+    User --> Image[🖼️ Image Input]
+
+    %% TEXT PATH
+    Text --> EmoT[Emotion Detection<br/>rule-based]
+    EmoT --> GPT_T[GPT-OSS-120B]
+    GPT_T --> RespT[AI Response]
+
+    %% VOICE PATH
+    Voice --> STT[SpeechRecognition<br/>Speech to Text]
+    STT --> EmoV[Emotion Detection<br/>rule-based]
+    EmoV --> GPT_V[GPT-OSS-120B]
+    GPT_V --> RespV[AI Response]
+    RespV --> TextOutV([💬 Text Output])
+    RespV --> TTS[speechSynthesis]
+    TTS --> VoiceOut([🔊 Voice Output])
+
+    %% IMAGE PATH
+    Image --> CV[OpenCV<br/>Preprocessing]
+    CV --> OCR[Tesseract OCR]
+    CV --> Qwen[Qwen 3.8 27B<br/>Vision Model]
+    OCR --> Qwen
+    Qwen --> RespI[Image Analysis Response]
+
+    style GPT_T fill:#4A90D9,color:#fff
+    style GPT_V fill:#4A90D9,color:#fff
+    style Qwen fill:#E27D60,color:#fff
+```
+
+
 ## License
 
 This project is licensed under the MIT License.
@@ -116,3 +151,5 @@ You are free to use, modify, and distribute this project.
 
 ## Author
 Developed by Nisu Bharti
+
+ 
