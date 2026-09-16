@@ -11,45 +11,52 @@ The project focuses on combining Natural Language Processing, speech processing,
  
 
  ## **Key Features**
-  * Text-Based Interaction: Users can ask questions using a text input interface.
-  * Voice Interaction (Speech-to-Text & Text-to-Speech): Users can speak directly to the assistant using a browser microphone, and AI responses are spoken aloud.
-  * Speaker Control Panel: Includes speaker ON/OFF toggle, stop speaking mid-response, and replay last AI response.
-  * Image Upload & Explanation: Users can upload an image and receive an AI-generated explanation of its content.
-  * Emotion Detection: The system detects emotions such as angry, confused, happy, or neutral from user input and adjusts the response tone accordingly.
-  * Emotion-Aware AI Responses: The AI maintains correct answers while modifying tone based on detected emotion (calm, explanatory, friendly, etc.).
+  * Text-Based Interaction: Users can ask questions through a text input interface and receive AI-generated responses.
+  * Voice Interaction (Speech-to-Text & Text-to-Speech): Users can speak directly through the browser microphone using the Web Speech         API,and the AI-generated responses can be spoken aloud using the browser's Speech Synthesis API.
+  * Speaker Control Panel: Includes speaker ON/OFF toggle, stop speaking mid-response, and replay the last AI response.
+  *  Image Upload & AI Analysis: Users can upload images and receive AI-generated descriptions, explanations, readable text, or solutions       to questions visible in the image.
+  * OCR-Based Text Extraction: Uses Tesseract OCR to extract text from uploaded images and provide additional context for image analysis.
+  * Emotion Detection: Detects emotions such as angry, confused, happy, sad, and neutral from user input using lightweight rule-based           keyword and phrase matching.
+   * Emotion-Aware AI Responses: The assistant dynamically adapts its response style based on the detected emotion—for example, using a        calm tone for frustration, step-by-step explanations for confusion, and a friendly tone for positive emotions.
+   * Multi-Modal AI Processing: Combines text, voice, and image inputs into a single AI assistant experience.
 
 
-## **Technologies Used**
+ ## **Technologies Used**
 
-* Python – Core backend logic
-* Flask – Web framework
-* Groq LLM API – Large Language Model integration
-* HTML, CSS, JavaScript – Frontend interface
-* SpeechRecognition API (Browser) – Voice input
-* Web Speech API – Text-to-speech output
-* dotenv – Environment variable management
+* **Python** – Core backend logic and application development
+* **Flask** – Web framework for handling routes, requests, and responses
+* **Groq API** – Integration with LLM and vision models
+* **GPT-OSS-120B** – Text and voice response generation
+* **Qwen 3.8 27B** – Image understanding and analysis
+* **HTML, CSS, JavaScript** – Frontend interface and user interaction
+* **Web Speech API (`SpeechRecognition`)** – Browser-based speech-to-text
+* **Web Speech API (`speechSynthesis`)** – Text-to-speech output
+* **OpenCV** – Image preprocessing
+* **Tesseract OCR** – Text extraction from uploaded images
+* **Pillow (PIL)** – Image handling and processing
+* **python-dotenv** – Environment variable management
 
-## Project Structure
-```
+ ## Project Structure
+
+```text
 MULTI_MODEL_ASSISTANT/
 │
-├── app.py                     # Main Flask application
-├── requirements.txt           # Project dependencies
-├── README.md                  # Project documentation
-├── .env                       # API keys and environment variables
+├── app.py                         # Main Flask application
+├── requirements.txt               # Project dependencies
+├── README.md                      # Project documentation
+├── .env                           # API key and environment variables
 │
 ├── templates/
-│   └── index.html             # Main UI template
+│   └── index.html                 # Main frontend UI
 │
 ├── static/
-│   └── style.css              # Styling
+│   └── style.css                  # Frontend styling
 │
 ├── utils/
-│   ├── speech_to_text.py      # Voice input handling
-│   └── emotion_detector.py    # Emotion detection logic
+│   ├── speech_to_text.py          # Voice input text handling
+│   └── image_reader.py            # Image analysis using OCR and vision model
 │
-├── uploads/                   # Uploaded images
-
+└── uploads/                       # Uploaded images
 ```
 ## Setup Instructions
 
@@ -85,22 +92,22 @@ Open the browser and go to:
 
  ```
 
-## Usage
+ ## Usage
 
-- Type a question and click Ask AI
-- Use the Speak button for voice input
-- Upload an image to receive AI explanation
-- Control AI voice using speaker controls
-- Observe emotion-aware responses based on your input tone
+- **Text Input:** Type a question and click **Ask AI**.
+- **Voice Input:** Click the **Speak** button and speak through the browser microphone.
+- **Image Analysis:** Upload an image to receive an AI-generated explanation or analysis.
+- **Speaker Controls:** Turn voice output ON/OFF, stop speaking, or replay the last AI response.
+- **Emotion-Aware Responses:** The assistant detects emotions from user input and adjusts its response style accordingly.
 
 
-## Future Enhancements
+ ## Future Enhancements
 
-- Chat history panel with session-based memory
-- User authentication
-- Emotion visualization dashboard
-- AI response summarization
-- Multi-language auto-detection
+- **Chat History & Session Memory:** Add a chat history panel with session-based conversation memory.
+- **User Authentication:** Add secure user registration and login functionality.
+- **Emotion Visualization Dashboard:** Display detected emotions using charts or visual indicators.
+- **AI Response Summarization:** Provide concise summaries of longer AI-generated responses.
+- **Multi-Language Support:** Add automatic language detection and multilingual interaction.
 
 ## License
 
